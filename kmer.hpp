@@ -119,6 +119,16 @@ struct reverse_complement : std::unary_function<T, T> {
   }
 };
 
+template <class kmer_t>
+struct canonical : std::unary_function<kmer_t, kmer_t> {
+  const size_t _k;
+  reverse_complement<kmer_t> rc;
+  canonical(size_t k) : _k(k), rc(k) {}
+  kmer_t operator()(const kmer_t & x) const {
+    return std::min(x, rc(x));
+  }
+};
+
 template <typename T>
 inline T get_start_node(const T & x) {
   return x << NT_WIDTH;
@@ -143,6 +153,7 @@ template <typename T>
 T get_end_node(const T & x, uint8_t k) {
   return get_range(x, 0, k-1);
 }
+
 
 template <typename T>
 T get_start_node_suffix(const T & x, uint8_t k) {

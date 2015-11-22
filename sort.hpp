@@ -47,6 +47,32 @@ typed_iterator<T, iterator> & make_typed_iterator(const iterator & it) {
 } // namespace
 
 template <typename kmer_t>
+struct canonical_nodes_less {
+  typedef kmer_t value_type;
+  canonical<kmer_t> f;
+  canonical_nodes_less(size_t k) : _k(k), f(k-1) {}
+  bool operator()(const value_type& a, const value_type & b) const {
+    auto a_s = f(get_start_node(a));
+    auto a_t = f(get_end_node(a, _k));
+    auto b_s = f(get_start_node(b));
+    auto b_t = f(get_end_node(b, _k));
+
+    return boost::make_tuple(std::min(a_s, a_t), max(a_s,a_t)) < boost::make_tuple(std::min(b_s, b_t), std::max(b_s, b_t));
+  }
+  value_type min_value() const { return value_type(0); }
+  value_type max_value() const {
+    COSMO_ASSERT(_k%2==0);
+    // TTTAAA TnAn, n = k/2
+    size_t W = bitwidth<kmer_t>::width;
+    size_t padding = W - k*2;
+    kmer_t temp = 1 << padding + k - 1; // k/2
+    // propogate right bit
+    temp ^= (temp - 1);
+    return temp;
+  }
+};
+
+template <typename kmer_t>
 struct kmer_less {
   typedef kmer_t value_type;
   bool operator() (const value_type & a, const value_type & b) const {
